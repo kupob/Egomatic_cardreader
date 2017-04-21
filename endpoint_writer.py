@@ -19,9 +19,8 @@ class EndpointWriter(Thread):
             if self.message_deque:
                 message = self.message_deque.popleft()
                 self.end_point.write(message)
-                print "SEND" + str(message)
             else:
-                sleep(0.1)
+                sleep(0.01)
 
     def send_greeting(self):
         # write the data
@@ -38,3 +37,18 @@ class EndpointWriter(Thread):
         cs ^= 32
         ba.append(cs)
         self.message_deque.append(ba)
+
+    def send_card_request(self):
+        # write the data
+        ba = bytearray()
+        ba.append(0xF2)
+        ba.append(0xFF)
+        ba.append(1)
+        ba.append(2)
+        cs = 1
+        cs ^= 2
+        ba.append(cs)
+        self.message_deque.append(ba)
+
+
+

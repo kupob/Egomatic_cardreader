@@ -4,7 +4,7 @@ import usb.core
 import usb.util
 from endpoint_reader import *
 from endpoint_writer import *
-from time import sleep
+import time
 
 # find our device
 dev = usb.core.find(idVendor=0x04d8, idProduct=0x000a)
@@ -23,9 +23,8 @@ dev.set_configuration()
 
 # get an endpoint instance
 cfg = dev.get_active_configuration()
-intf = cfg[(0, 0)]
 
-writers = []
+writer = None
 readers = {}
 
 for cfg in dev:
@@ -36,7 +35,6 @@ for cfg in dev:
                 writer = EndpointWriter(e)
                 writer.daemon = True
                 writer.start()
-                writers.append(writer)
             else:
                 reader = EndpointReader(e)
                 reader.daemon = True
@@ -55,19 +53,24 @@ reader_states = {
     0x80 : "Reader ok. Card data available",
 }
 
-if not writers:
+if not writer:
     print "Error: no OUT endpoint"
     quit()
 
-writers[0].send_greeting()
+last_timeout_time = 0
 
+writer.send_greeting()
 while True:
-    sleep(0.1)
+    current_time = int(time.time() * 1000)
+    if current_time - last_timeout_time > 500:
+        writer.send_card_request()
+        last_timeout_time = current_time
+
     for e_address in readers:
         reader = readers[e_address]
         while reader.message_deque:
             message_array = reader.message_deque.popleft()
-            print message_array
+            # print message_array
 
             if message_array[0] != 0xF2:   # Invalid start byte... skeep
                 continue
@@ -95,11 +98,13 @@ while True:
                 print "Check sum error, got = " + str(cs) + ", but calculated = " + str(cs_calc)
                 continue
 
-            print"cmd: " + str(cmd) \
-                 + ", len: " + str(length) \
-                 + ", reader state: " + str(reader_state) \
-                 + ", reader type:" + str(reader_type) \
-                 + ", code length: " + str(code_length)
+            '''
+            print "cmd: {0}, len: {1}, reader state: {2}, reader type:{3}, code length: {4}".format(str(cmd),
+                                                                                                    str(length),
+                                                                                                    str(reader_state),
+                                                                                                    str(reader_type),
+                                                                                                    str(code_length))
+            '''
 
             reader_state_string = reader_states[reader_state]
             print reader_state_string
