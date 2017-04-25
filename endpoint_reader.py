@@ -17,7 +17,7 @@ class EndpointReader(Thread):
     def run(self):
         while True:
             try:
-                message = self.end_point.read(32, 10000)
+                message = self.end_point.read(32, 10000000)
                 if message:
                     self.message_deque.append(message)
                 else:

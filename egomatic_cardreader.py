@@ -45,7 +45,8 @@ for cfg in dev:
                 reader.start()
                 readers[e.bEndpointAddress] = reader
 
-net_sender = NetworkSender()
+sender_event = threading.Event()
+net_sender = NetworkSender(sender_event)
 net_sender.daemon = True
 net_sender.start()
 
@@ -119,5 +120,6 @@ while True:
                 code = packet[7:7 + code_length/8]
                 code_int = 0
                 for i in range(0, code_length/8):
-                    code_int += code[i] * math_pow(1024, code_length/8 - 1 - i)
-                print code_int
+                    code_int += int(code[i] * math_pow(1024, code_length/8 - 1 - i))
+                sender_event.set()
+                net_sender.send_RFID(code_int)
