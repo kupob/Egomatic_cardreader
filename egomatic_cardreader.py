@@ -4,6 +4,7 @@ import usb.core
 import usb.util
 from endpoint_reader import *
 from endpoint_writer import *
+from network_sender import *
 import time
 
 # find our device
@@ -40,6 +41,10 @@ for cfg in dev:
                 reader.daemon = True
                 reader.start()
                 readers[e.bEndpointAddress] = reader
+
+net_sender = NetworkSender()
+net_sender.daemon = True
+net_sender.start()
 
 reader_states = {
     0x00 : "Reader ok. No card",
