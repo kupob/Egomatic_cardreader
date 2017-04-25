@@ -6,6 +6,8 @@ from endpoint_reader import *
 from endpoint_writer import *
 from network_sender import *
 import time
+import threading
+from math import pow as math_pow
 
 # find our device
 dev = usb.core.find(idVendor=0x04d8, idProduct=0x000a)
@@ -26,6 +28,7 @@ dev.set_configuration()
 cfg = dev.get_active_configuration()
 
 writer = None
+writer_event = threading.Event()
 readers = {}
 
 for cfg in dev:
@@ -33,7 +36,7 @@ for cfg in dev:
         for e in i:
             # print e.bEndpointAddress
             if usb.util.endpoint_direction(e.bEndpointAddress) == usb.util.ENDPOINT_OUT:
-                writer = EndpointWriter(e)
+                writer = EndpointWriter(e, writer_event)
                 writer.daemon = True
                 writer.start()
             else:
@@ -64,12 +67,16 @@ if not writer:
 
 last_timeout_time = 0
 
+writer_event.set()
 writer.send_greeting()
 while True:
     current_time = int(time.time() * 1000)
-    if current_time - last_timeout_time > 500:
+    if current_time - last_timeout_time > 40:
         writer.send_card_request()
         last_timeout_time = current_time
+    elif current_time - last_timeout_time < 30:
+        writer_event.set()
+        time.sleep(0.002)
 
     for e_address in readers:
         reader = readers[e_address]
@@ -103,13 +110,14 @@ while True:
                 print "Check sum error, got = " + str(cs) + ", but calculated = " + str(cs_calc)
                 continue
 
-            '''
-            print "cmd: {0}, len: {1}, reader state: {2}, reader type:{3}, code length: {4}".format(str(cmd),
-                                                                                                    str(length),
-                                                                                                    str(reader_state),
-                                                                                                    str(reader_type),
-                                                                                                    str(code_length))
-            '''
-
             reader_state_string = reader_states[reader_state]
-            print reader_state_string
+            # print reader_state_string
+
+            if reader_state == 0x02:
+                writer.send_greeting()
+            elif reader_state == 0x80:
+                code = packet[7:7 + code_length/8]
+                code_int = 0
+                for i in range(0, code_length/8):
+                    code_int += code[i] * math_pow(1024, code_length/8 - 1 - i)
+                print code_int

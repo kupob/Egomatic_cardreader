@@ -3,24 +3,27 @@ import socket
 from uuid import getnode as get_mac
 from threading import *
 from collections import deque
-from time import sleep
+import time
 
 
 class EndpointWriter(Thread):
     end_point = None
+    event = None
     message_deque = deque([])
 
-    def __init__(self, end_point):
+    def __init__(self, end_point, event):
         self.end_point = end_point
+        self.event = event
         Thread.__init__(self)
 
     def run(self):
         while True:
+            self.event.wait()
             if self.message_deque:
                 message = self.message_deque.popleft()
                 self.end_point.write(message)
-            else:
-                sleep(0.01)
+                # print "SENT " + str(time.time())
+            self.event.clear()
 
     def send_greeting(self):
         # write the data
