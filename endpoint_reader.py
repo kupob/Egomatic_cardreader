@@ -3,6 +3,7 @@ import socket
 from uuid import getnode as get_mac
 from threading import *
 from collections import deque
+import time
 
 
 class EndpointReader(Thread):
@@ -15,6 +16,11 @@ class EndpointReader(Thread):
 
     def run(self):
         while True:
-            message = self.end_point.read(32, 1000000)
-            if message:
-                self.message_deque.append(message)
+            try:
+                message = self.end_point.read(32, 10000)
+                if message:
+                    self.message_deque.append(message)
+                else:
+                    time.sleep(0.005)
+            except Exception:
+                print "Read timeout"
