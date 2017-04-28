@@ -26,7 +26,6 @@ class NetworkSender(Thread):
         while True:
             self.event.wait()
             if self.message_deque:
-                # message = str(self.mac) + ' ' + str(self.message_deque.popleft()).strip('[]')
                 message = str(self.mac) + ' ' + ' '.join(str(x) for x in self.message_deque.popleft())
                 try:
                     self.cs.sendto(message, self.server_address)
