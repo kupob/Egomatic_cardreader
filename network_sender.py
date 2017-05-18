@@ -1,13 +1,13 @@
 # -*- coding: utf-8 -*-
 import socket
-from uuid import getnode as get_mac
+# from uuid import getnode as get_mac
 from threading import *
 from configreader import *
 from collections import deque
 
 
 class NetworkSender(Thread):
-    mac = get_mac()
+    # mac = get_mac()
     config = ConfigReader()
     cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     server_address = (config.get_server_host(), config.get_server_port())
@@ -21,12 +21,13 @@ class NetworkSender(Thread):
 
     def run(self):
         self.cs.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self.cs.bind(('', self.config.get_cardreader_port()))
         self.cs.connect(self.server_address)
 
         while True:
             self.event.wait()
             if self.message_deque:
-                message = str(self.mac) + ' ' + ' '.join(str(x) for x in self.message_deque.popleft())
+                message = ' '.join(str(x) for x in self.message_deque.popleft())
                 try:
                     self.cs.sendto(message, self.server_address)
                 except socket.error, exc:
@@ -34,5 +35,5 @@ class NetworkSender(Thread):
             self.event.clear()
 
     def send_RFID(self, rfid):
-        self.message_deque.append([self.config.get_msg_RFID_code(), rfid])
+        self.message_deque.append([self.config.get_message_type('MSG_RFID'), rfid])
 

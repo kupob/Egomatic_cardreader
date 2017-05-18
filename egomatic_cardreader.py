@@ -112,7 +112,6 @@ while True:
                 continue
 
             reader_state_string = reader_states[reader_state]
-            # print reader_state_string
 
             if reader_state == 0x02:
                 writer.send_greeting()
