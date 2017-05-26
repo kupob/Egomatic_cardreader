@@ -1,5 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import sys
+sys.path.remove('/usr/local/lib/python2.7/dist-packages')
+sys.path.insert(0, '/usr/local/lib/python2.7/dist-packages')
+
 import usb.core
 import usb.util
 from endpoint_reader import *
@@ -68,8 +72,8 @@ if not writer:
 
 last_timeout_time = 0
 
-writer_event.set()
 writer.send_greeting()
+writer_event.set()
 while True:
     current_time = int(time.time() * 1000)
     if current_time - last_timeout_time > 40:
@@ -120,5 +124,5 @@ while True:
                 code_int = 0
                 for i in range(0, code_length/8):
                     code_int += int(code[i] * math_pow(1024, code_length/8 - 1 - i))
-                sender_event.set()
                 net_sender.send_RFID(code_int)
+                sender_event.set()

@@ -26,7 +26,7 @@ class NetworkSender(Thread):
 
         while True:
             self.event.wait()
-            if self.message_deque:
+            while self.message_deque:
                 message = ' '.join(str(x) for x in self.message_deque.popleft())
                 try:
                     self.cs.sendto(message, self.server_address)
